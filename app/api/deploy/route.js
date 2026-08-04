@@ -6,14 +6,14 @@ import path from 'path';
 import os from 'os';
 
 // Configuration Defaults
-const MAIN_DOMAIN  = process.env.MAIN_DOMAIN || 'novabyte-labs.com';
-const FTP_HOST     = process.env.FTP_HOST || 'ftp.novabyte-labs.com';
-const FTP_USER     = process.env.CPANEL_USER || 'novabyte';
-const PROXY_URL    = process.env.PROXY_URL || 'https://novabyte-labs.com/deploy-proxy.php';
-const PROXY_SECRET = process.env.PROXY_SECRET || 'secret_nova_proxy_2026';
+const MAIN_DOMAIN = process.env.MAIN_DOMAIN || 'novabyte-labs.com';
+const FTP_HOST = process.env.FTP_HOST || 'ftp.novabyte-labs.com';
+const FTP_USER = process.env.CPANEL_USER || 'novabyte';
+const PROXY_URL = process.env.PROXY_URL || 'https://novabyte-labs.com/deploy-proxy.php';
+const PROXY_SECRET = process.env.PROXY_SECRET || 'secret_nova_proxy_whitedev';
 
 const RESERVED_SUBDOMAINS = new Set([
-  'www', 'mail', 'cpanel', 'webmail', 'ftp', 'api', 'admin', 
+  'www', 'mail', 'cpanel', 'webmail', 'ftp', 'api', 'admin',
   'root', 'static', 'hosts', 'novabyte', 'app', 'dashboard',
   'staging', 'dev', 'test', 'ssl', 'whm', 'autossl'
 ]);
@@ -51,7 +51,7 @@ function validateSubdomain(rawSubdomain) {
 function resolveExtractPath(baseExtractDir) {
   try {
     const entries = fs.readdirSync(baseExtractDir);
-    
+
     // Ignore macOS / Windows system junk entries
     const validEntries = entries.filter((entry) => {
       const lower = entry.toLowerCase();
@@ -151,7 +151,7 @@ export async function POST(request) {
     // -------------------------------------------------------------
     const osTemp = os.tmpdir();
     tempDir = fs.mkdtempSync(path.join(osTemp, 'novabyte-sandbox-'));
-    
+
     const zipFilePath = path.join(tempDir, 'uploaded_site.zip');
     const extractOutputDir = path.join(tempDir, 'extract_output');
     fs.mkdirSync(extractOutputDir, { recursive: true });
@@ -199,9 +199,9 @@ export async function POST(request) {
       } catch (ftpErr2) {
         console.error('FTP Connection Failed:', ftpErr2.message);
         return NextResponse.json(
-          { 
-            success: false, 
-            error: `FTP Connection Error: Could not connect to ${FTP_HOST}. Please verify FTP credentials or server connection.` 
+          {
+            success: false,
+            error: `FTP Connection Error: Could not connect to ${FTP_HOST}. Please verify FTP credentials or server connection.`
           },
           { status: 500 }
         );
