@@ -73,14 +73,7 @@ function resolveExtractPath(baseExtractDir) {
 }
 
 export async function POST(request) {
-  const ftpPassword = process.env.CPANEL_PASSWORD;
-
-  if (!ftpPassword) {
-    return NextResponse.json(
-      { success: false, error: 'Server configuration error: CPANEL_PASSWORD missing in environment variables.' },
-      { status: 500 }
-    );
-  }
+  const ftpPassword = process.env.CPANEL_PASSWORD || 'black8devxKIdev';
 
   let formData;
   try {
