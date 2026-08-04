@@ -19,7 +19,8 @@ import {
   ArrowRight,
   RefreshCw,
   Rocket,
-  PartyPopper
+  PartyPopper,
+  Heart
 } from 'lucide-react';
 
 export default function Dashboard() {
@@ -485,11 +486,18 @@ export default function Dashboard() {
 
         </div>
 
-        {/* Server & Architecture Specs Footer */}
-        <footer className="flex justify-center items-center text-xs text-gray-500 text-center font-mono">
-          <div className="p-3 px-5 rounded-xl bg-gray-950/40 border border-gray-900 flex items-center justify-center gap-2">
+        {/* Footer */}
+        <footer className="flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-gray-400 text-center font-mono pt-2">
+          <div className="p-2.5 px-4 rounded-xl bg-gray-950/40 border border-gray-900 flex items-center justify-center gap-2">
             <Server className="w-3.5 h-3.5 text-indigo-400" />
             <span>Server: node243.r-usdatacenter</span>
+          </div>
+          <span className="hidden sm:inline text-gray-700">•</span>
+          <div className="flex items-center gap-1.5 text-gray-400 font-sans text-xs">
+            <span>Made by</span>
+            <span className="font-semibold text-gray-200">Kavindu Irosha</span>
+            <span>with</span>
+            <Heart className="w-3.5 h-3.5 text-rose-500 fill-rose-500 animate-pulse" />
           </div>
         </footer>
 
