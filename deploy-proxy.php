@@ -2,43 +2,56 @@
 /**
  * deploy-proxy.php
  * 
- * Secure cPanel Subdomain Provisioning Proxy
- * Place this file inside your server's public_html directory (e.g., https://novabyte-labs.com/deploy-proxy.php)
- * 
- * It receives a POST request from your Next.js backend, validates the secret key,
- * and calls the local cPanel UAPI internally (bypassing external firewall blocks).
+ * Secure cPanel Subdomain Provisioning & Direct Site Deployer
+ * Place this file inside your server's public_html directory (https://novabyte-labs.com/deploy-proxy.php)
  */
 
+// Enable CORS for browser requests
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type, Authorization, X-Requested-With');
 header('Content-Type: application/json');
 
-// --- SERVER CONFIGURATION PLACEHOLDERS ---
-$SECRET_KEY      = 'secret_nova_proxy_whitedev'; // Replace with a strong random key (matches PROXY_SECRET in .env.local)
-$CPANEL_USER     = 'novabyte';                      // Your cPanel username
-$CPANEL_PASSWORD = 'black8devxKIdev';     // Your cPanel password
-$MAIN_DOMAIN     = 'novabyte-labs.com';             // Your root domain
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    http_response_code(200);
+    exit;
+}
 
-// 1. Verify HTTP Request Method
+// Configuration
+$SECRET_KEY      = 'secret_nova_proxy_whitedev'; // Matches PROXY_SECRET in Next.js
+$CPANEL_USER     = 'novabyte';
+$CPANEL_PASSWORD = 'black8devxKIdev';
+$MAIN_DOMAIN     = 'novabyte-labs.com';
+
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Method not allowed. Only POST is accepted.']);
     exit;
 }
 
-// 2. Extract POST data (supports both JSON body and Form Data)
-$rawInput = file_get_contents('php://input');
-$jsonInput = json_decode($rawInput, true);
+// 1. Extract POST parameters (supports Multipart FormData and JSON)
+$providedSecret = $_POST['secret'] ?? '';
+$subdomain      = $_POST['subdomain'] ?? '';
 
-$providedSecret = $_POST['secret'] ?? $jsonInput['secret'] ?? '';
-$subdomain      = $_POST['subdomain'] ?? $jsonInput['subdomain'] ?? '';
+if (empty($providedSecret) || empty($subdomain)) {
+    $rawInput = file_get_contents('php://input');
+    if (!empty($rawInput)) {
+        $jsonInput = json_decode($rawInput, true);
+        if (is_array($jsonInput)) {
+            $providedSecret = $providedSecret ?: ($jsonInput['secret'] ?? '');
+            $subdomain      = $subdomain ?: ($jsonInput['subdomain'] ?? '');
+        }
+    }
+}
 
-// 3. Verify Secret Key
+// 2. Verify Secret Key
 if (empty($providedSecret) || !hash_equals($SECRET_KEY, $providedSecret)) {
     http_response_code(403);
     echo json_encode(['success' => false, 'error' => 'Unauthorized: Invalid secret key.']);
     exit;
 }
 
-// 4. Sanitize Subdomain
+// 3. Sanitize Subdomain
 $subdomain = strtolower(trim($subdomain));
 if (empty($subdomain) || !preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $subdomain)) {
     http_response_code(400);
@@ -46,47 +59,82 @@ if (empty($subdomain) || !preg_match('/^[a-z0-9]+(-[a-z0-9]+)*$/', $subdomain)) 
     exit;
 }
 
-// 5. Construct Local cPanel UAPI URL (Internal loopback bypasses external 2083 firewall)
-$uapiUrl = "https://127.0.0.1:2083/execute/SubDomain/addsubdomain?domain=" . urlencode($subdomain) . "&rootdomain=" . urlencode($MAIN_DOMAIN) . "&dir=" . urlencode("public_html/hosts/" . $subdomain);
-
-// 6. Execute cPanel UAPI Call via cURL
-$ch = curl_init();
-
-curl_setopt_array($ch, [
-    CURLOPT_URL            => $uapiUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_SSL_VERIFYPEER => false, // cPanel self-signed internal cert bypass
-    CURLOPT_SSL_VERIFYHOST => false,
-    CURLOPT_USERPWD        => "$CPANEL_USER:$CPANEL_PASSWORD",
-    CURLOPT_HTTPHEADER     => ['Accept: application/json'],
-    CURLOPT_TIMEOUT        => 20,
-]);
-
-$responseBody = curl_exec($ch);
-$httpCode     = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-$curlError    = curl_error($ch);
-curl_close($ch);
-
-if ($responseBody === false) {
-    http_response_code(502);
-    echo json_encode(['success' => false, 'error' => 'Internal cURL Error: ' . $curlError]);
+$reserved = ['www', 'mail', 'cpanel', 'webmail', 'ftp', 'api', 'admin', 'root', 'static', 'hosts', 'novabyte', 'app', 'dashboard', 'staging', 'dev', 'test', 'ssl', 'whm', 'autossl'];
+if (in_array($subdomain, $reserved)) {
+    http_response_code(400);
+    echo json_encode(['success' => false, 'error' => 'Reserved subdomain name cannot be used.']);
     exit;
 }
 
-// 7. Parse and Return JSON Response
-$uapiData = json_decode($responseBody, true);
+$targetRelPath = "public_html/hosts/" . $subdomain;
+$targetAbsPath = $_SERVER['DOCUMENT_ROOT'] . "/hosts/" . $subdomain;
 
-if ($httpCode >= 200 && $httpCode < 300) {
-    echo json_encode([
-        'success'   => true,
-        'subdomain' => $subdomain,
-        'uapi'      => $uapiData
-    ]);
-} else {
-    http_response_code($httpCode);
-    echo json_encode([
-        'success'   => false,
-        'error'     => 'cPanel UAPI returned HTTP ' . $httpCode,
-        'uapi'      => $uapiData
-    ]);
+// 4. Create Subdomain via cPanel UAPI internally
+$uapiUrl = "https://127.0.0.1:2083/execute/SubDomain/addsubdomain?domain=" . urlencode($subdomain) . "&rootdomain=" . urlencode($MAIN_DOMAIN) . "&dir=" . urlencode($targetRelPath);
+
+$ch = curl_init();
+curl_setopt_array($ch, [
+    CURLOPT_URL            => $uapiUrl,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_SSL_VERIFYPEER => false,
+    CURLOPT_SSL_VERIFYHOST => false,
+    CURLOPT_USERPWD        => "$CPANEL_USER:$CPANEL_PASSWORD",
+    CURLOPT_HTTPHEADER     => ['Accept: application/json'],
+    CURLOPT_TIMEOUT        => 25,
+]);
+$uapiRes = curl_exec($ch);
+curl_close($ch);
+
+// Ensure target directory exists
+if (!is_dir($targetAbsPath)) {
+    @mkdir($targetAbsPath, 0755, true);
 }
+
+// 5. Direct ZIP Extraction if file is uploaded
+$fileUploaded = false;
+$uploadedZip = $_FILES['zipFile'] ?? $_FILES['file'] ?? null;
+
+if ($uploadedZip && isset($uploadedZip['tmp_name']) && is_uploaded_file($uploadedZip['tmp_name'])) {
+    if ($uploadedZip['error'] === UPLOAD_ERR_OK) {
+        $zip = new ZipArchive();
+        if ($zip->open($uploadedZip['tmp_name']) === TRUE) {
+            // Extract files directly to host folder
+            $zip->extractTo($targetAbsPath);
+            $zip->close();
+            $fileUploaded = true;
+
+            // Double-folder fix (if zip contains single master folder)
+            $scanned = array_diff(scandir($targetAbsPath), array('.', '..', '__MACOSX', '.DS_Store', 'Thumbs.db'));
+            if (count($scanned) === 1) {
+                $singleItem = $targetAbsPath . '/' . reset($scanned);
+                if (is_dir($singleItem)) {
+                    $innerFiles = array_diff(scandir($singleItem), array('.', '..'));
+                    foreach ($innerFiles as $f) {
+                        rename($singleItem . '/' . $f, $targetAbsPath . '/' . $f);
+                    }
+                    @rmdir($singleItem);
+                }
+            }
+        } else {
+            http_response_code(400);
+            echo json_encode(['success' => false, 'error' => 'Failed to extract uploaded ZIP file. Archive may be corrupted.']);
+            exit;
+        }
+    } else {
+        http_response_code(400);
+        echo json_encode(['success' => false, 'error' => 'File upload failed with PHP upload error code: ' . $uploadedZip['error']]);
+        exit;
+    }
+}
+
+$liveUrl = "https://" . $subdomain . "." . $MAIN_DOMAIN;
+
+echo json_encode([
+    'success'      => true,
+    'message'      => 'Subdomain provisioned and site deployed successfully!',
+    'subdomain'    => $subdomain,
+    'domain'       => $MAIN_DOMAIN,
+    'liveUrl'      => $liveUrl,
+    'fileUploaded' => $fileUploaded,
+    'deployedAt'   => date('c'),
+]);

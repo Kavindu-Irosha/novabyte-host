@@ -130,26 +130,60 @@ export default function Dashboard() {
     formData.append('zipFile', zipFile);
 
     try {
-      const response = await fetch('/api/deploy', {
-        method: 'POST',
-        body: formData,
-      });
-
+      let response;
       let data;
-      const responseText = await response.text();
+
       try {
-        data = responseText ? JSON.parse(responseText) : {};
-      } catch (parseErr) {
-        if (!response.ok) {
-          if (response.status === 413) {
-            const sizeFormatted = formatFileSize(zipFile?.size);
-            throw new Error(`File size (${sizeFormatted}) exceeds server upload limits (HTTP 413: Payload Too Large). Cloud serverless platforms limit request uploads to ~5-10MB. Please compress high-resolution images, remove unused media/git folders, or split your files.`);
-          } else if (response.status === 504 || response.status === 502) {
-            throw new Error(`Deployment timed out on server (HTTP ${response.status}). The FTP transfer took too long or the connection dropped.`);
-          }
-          throw new Error(`Server returned error status HTTP ${response.status} (${response.statusText || 'Upload Error'}).`);
+        response = await fetch('/api/deploy', {
+          method: 'POST',
+          body: formData,
+        });
+        const responseText = await response.text();
+        try {
+          data = responseText ? JSON.parse(responseText) : {};
+        } catch (parseErr) {
+          data = {};
         }
-        throw new Error('Server returned an unexpected non-JSON response.');
+      } catch (fetchErr) {
+        response = { ok: false, status: 0 };
+        data = {};
+      }
+
+      // Fallback: If cloud serverless platform rejects payload (HTTP 413) or times out (504/502), upload directly via PHP proxy
+      if (!response.ok && (response.status === 413 || response.status === 504 || response.status === 502 || response.status === 0 || !data.success)) {
+        try {
+          const proxyUrl = 'https://novabyte-labs.com/deploy-proxy.php';
+          const proxyFormData = new FormData();
+          proxyFormData.append('subdomain', sanitizedSubdomain);
+          proxyFormData.append('zipFile', zipFile);
+          proxyFormData.append('secret', 'secret_nova_proxy_whitedev');
+
+          const proxyRes = await fetch(proxyUrl, {
+            method: 'POST',
+            body: proxyFormData,
+          });
+
+          const proxyText = await proxyRes.text();
+          let proxyData;
+          try {
+            proxyData = proxyText ? JSON.parse(proxyText) : {};
+          } catch (pe) {
+            proxyData = {};
+          }
+
+          if (proxyRes.ok && proxyData.success) {
+            data = proxyData;
+            response = { ok: true, status: 200 };
+          } else if (response.status === 413 && (!proxyRes.ok || !proxyData.success)) {
+            const sizeFormatted = formatFileSize(zipFile?.size);
+            throw new Error(`File upload failed (${sizeFormatted}). Server payload limit exceeded (HTTP 413). Please compress your ZIP file.`);
+          }
+        } catch (fallbackErr) {
+          if (data && data.error) {
+            throw new Error(data.error);
+          }
+          throw fallbackErr;
+        }
       }
 
       if (!response.ok || !data.success) {
