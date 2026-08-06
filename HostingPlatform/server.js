@@ -74,22 +74,32 @@ function validateSubdomain(rawSubdomain) {
  */
 function resolveExtractPath(baseExtractDir) {
   try {
-    const entries = fs.readdirSync(baseExtractDir);
-
-    const validEntries = entries.filter((entry) => {
-      const lower = entry.toLowerCase();
-      return lower !== '__macosx' && lower !== '.ds_store' && lower !== 'thumbs.db';
-    });
-
-    if (validEntries.length === 1) {
-      const singlePath = path.join(baseExtractDir, validEntries[0]);
-      if (fs.statSync(singlePath).isDirectory()) {
-        console.log(`[Double-Folder Fix] Single master directory detected: "${validEntries[0]}". Shifting upload root.`);
-        return singlePath;
+    function findIndexDir(dir) {
+      if (!fs.existsSync(dir)) return null;
+      const entries = fs.readdirSync(dir);
+      for (const entry of entries) {
+        const lower = entry.toLowerCase();
+        if (lower === 'index.html' || lower === 'index.htm' || lower === 'index.php') {
+          return dir;
+        }
       }
+      for (const entry of entries) {
+        const fullPath = path.join(dir, entry);
+        if (fs.statSync(fullPath).isDirectory() && entry !== '__MACOSX' && entry !== '.DS_Store') {
+          const found = findIndexDir(fullPath);
+          if (found) return found;
+        }
+      }
+      return null;
+    }
+
+    const indexDir = findIndexDir(baseExtractDir);
+    if (indexDir) {
+      console.log(`[Smart Index Location] Found root index file in: "${indexDir}". Setting upload root.`);
+      return indexDir;
     }
   } catch (err) {
-    console.warn('[Double-Folder Fix] Notice:', err.message);
+    console.warn('[Smart Index Location] Notice:', err.message);
   }
 
   return baseExtractDir;

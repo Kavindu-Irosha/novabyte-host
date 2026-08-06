@@ -90,6 +90,37 @@ if (!is_dir($targetAbsPath)) {
     @mkdir($targetAbsPath, 0755, true);
 }
 
+// Helper to find index.html in nested folders
+function findIndexFolder($dir) {
+    if (!is_dir($dir)) return null;
+    $items = array_diff(scandir($dir), array('.', '..'));
+    foreach ($items as $item) {
+        $lower = strtolower($item);
+        if ($lower === 'index.html' || $lower === 'index.htm' || $lower === 'index.php') {
+            return $dir;
+        }
+    }
+    foreach ($items as $item) {
+        $subPath = $dir . '/' . $item;
+        if (is_dir($subPath) && $item !== '__MACOSX' && $item !== '.DS_Store') {
+            $found = findIndexFolder($subPath);
+            if ($found) return $found;
+        }
+    }
+    return null;
+}
+
+// Helper to recursively copy/move contents
+function moveFolderContents($srcDir, $destDir) {
+    if ($srcDir === $destDir) return;
+    $items = array_diff(scandir($srcDir), array('.', '..'));
+    foreach ($items as $item) {
+        $srcPath = $srcDir . '/' . $item;
+        $destPath = $destDir . '/' . $item;
+        @rename($srcPath, $destPath);
+    }
+}
+
 // 5. Direct ZIP Extraction if file is uploaded
 $fileUploaded = false;
 $uploadedZip = $_FILES['zipFile'] ?? $_FILES['file'] ?? null;
@@ -103,17 +134,10 @@ if ($uploadedZip && isset($uploadedZip['tmp_name']) && is_uploaded_file($uploade
             $zip->close();
             $fileUploaded = true;
 
-            // Double-folder fix (if zip contains single master folder)
-            $scanned = array_diff(scandir($targetAbsPath), array('.', '..', '__MACOSX', '.DS_Store', 'Thumbs.db'));
-            if (count($scanned) === 1) {
-                $singleItem = $targetAbsPath . '/' . reset($scanned);
-                if (is_dir($singleItem)) {
-                    $innerFiles = array_diff(scandir($singleItem), array('.', '..'));
-                    foreach ($innerFiles as $f) {
-                        rename($singleItem . '/' . $f, $targetAbsPath . '/' . $f);
-                    }
-                    @rmdir($singleItem);
-                }
+            // Smart Index Location & Flattener
+            $indexFolder = findIndexFolder($targetAbsPath);
+            if ($indexFolder && $indexFolder !== $targetAbsPath) {
+                moveFolderContents($indexFolder, $targetAbsPath);
             }
         } else {
             http_response_code(400);
