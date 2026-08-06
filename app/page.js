@@ -132,7 +132,8 @@ export default function Dashboard() {
       } catch (parseErr) {
         if (!response.ok) {
           if (response.status === 413) {
-            throw new Error('File upload failed: The server payload limit was exceeded (HTTP 413). Please try a smaller ZIP file.');
+            const sizeFormatted = formatFileSize(zipFile?.size);
+            throw new Error(`File size (${sizeFormatted}) exceeds server upload limits (HTTP 413: Payload Too Large). Cloud serverless platforms limit request uploads to ~5-10MB. Please compress high-resolution images, remove unused media/git folders, or split your files.`);
           } else if (response.status === 504 || response.status === 502) {
             throw new Error(`Deployment timed out on server (HTTP ${response.status}). The FTP transfer took too long or the connection dropped.`);
           }
