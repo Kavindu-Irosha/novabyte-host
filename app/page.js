@@ -66,6 +66,16 @@ export default function Dashboard() {
       setStatus('error');
       return;
     }
+
+    const MAX_LIMIT_MB = 15;
+    const MAX_LIMIT_BYTES = MAX_LIMIT_MB * 1024 * 1024;
+    if (file.size > MAX_LIMIT_BYTES) {
+      setErrorMessage(`Selected file is too large (${formatFileSize(file.size)}). Maximum upload limit is ${MAX_LIMIT_MB}MB. Please compress high-res images or remove large video files before uploading.`);
+      setStatus('error');
+      setZipFile(null);
+      return;
+    }
+
     setZipFile(file);
     if (status === 'error') setStatus('idle');
   };
@@ -263,10 +273,16 @@ export default function Dashboard() {
 
               {/* ZIP File Upload Zone */}
               <div className="space-y-3">
-                <label className="block text-sm font-semibold text-gray-200 flex items-center gap-2">
-                  <FileArchive className="w-4 h-4 text-indigo-400" />
-                  Static Website Package (.ZIP)
-                </label>
+                <div className="flex items-center justify-between">
+                  <label className="block text-sm font-semibold text-gray-200 flex items-center gap-2">
+                    <FileArchive className="w-4 h-4 text-indigo-400" />
+                    Static Website Package (.ZIP)
+                  </label>
+                  <span className="text-xs font-mono text-cyan-400 bg-cyan-950/60 px-2.5 py-1 rounded-lg border border-cyan-800/50 flex items-center gap-1.5">
+                    <span>Max Size:</span>
+                    <span className="font-bold text-white">15 MB</span>
+                  </span>
+                </div>
 
                 <div
                   onDragOver={handleDragOver}
@@ -317,7 +333,9 @@ export default function Dashboard() {
                         <p className="text-sm font-medium text-gray-200">
                           <span className="text-indigo-400 hover:underline">Click to browse</span> or drag and drop your .zip file
                         </p>
-                        <p className="text-xs text-gray-500 mt-1">Supports index.html, CSS, JS, images (Max 50MB)</p>
+                        <p className="text-xs text-gray-400 mt-1 font-mono">
+                          Supports index.html, CSS, JS, images <span className="text-cyan-400 font-semibold">(Max 15MB limit)</span>
+                        </p>
                       </div>
                     </div>
                   )}

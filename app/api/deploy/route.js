@@ -109,12 +109,12 @@ export async function POST(request) {
     return NextResponse.json({ success: false, error: 'Only .zip files are allowed.' }, { status: 400 });
   }
 
-  const maxSizeBytes = 50 * 1024 * 1024; // 50 MB
+  const maxSizeBytes = 15 * 1024 * 1024; // 15 MB
   if (!zipFile.size || zipFile.size === 0) {
     return NextResponse.json({ success: false, error: 'The uploaded .zip file is empty (0 bytes).' }, { status: 400 });
   }
   if (zipFile.size > maxSizeBytes) {
-    return NextResponse.json({ success: false, error: 'ZIP file size exceeds maximum limit of 50 MB.' }, { status: 400 });
+    return NextResponse.json({ success: false, error: 'ZIP file size exceeds maximum limit of 15 MB.' }, { status: 400 });
   }
 
   let tempDir = null;
