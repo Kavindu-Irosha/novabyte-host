@@ -6,6 +6,9 @@ import path from 'path';
 import os from 'os';
 
 // Configuration Defaults
+export const maxDuration = 60; // Maximum execution duration (seconds) for deployment & FTP sync
+export const dynamic = 'force-dynamic';
+
 const MAIN_DOMAIN = process.env.MAIN_DOMAIN || 'novabyte-labs.com';
 const FTP_HOST = process.env.FTP_HOST || 'ftp.novabyte-labs.com';
 const FTP_USER = process.env.CPANEL_USER || 'novabyte';
@@ -107,6 +110,9 @@ export async function POST(request) {
   }
 
   const maxSizeBytes = 50 * 1024 * 1024; // 50 MB
+  if (!zipFile.size || zipFile.size === 0) {
+    return NextResponse.json({ success: false, error: 'The uploaded .zip file is empty (0 bytes).' }, { status: 400 });
+  }
   if (zipFile.size > maxSizeBytes) {
     return NextResponse.json({ success: false, error: 'ZIP file size exceeds maximum limit of 50 MB.' }, { status: 400 });
   }
@@ -161,8 +167,12 @@ export async function POST(request) {
     fs.writeFileSync(zipFilePath, zipBuffer);
 
     // Extract using adm-zip
-    const zip = new AdmZip(zipFilePath);
-    zip.extractAllTo(extractOutputDir, true);
+    try {
+      const zip = new AdmZip(zipFilePath);
+      zip.extractAllTo(extractOutputDir, true);
+    } catch (extractErr) {
+      return NextResponse.json({ success: false, error: `Invalid or corrupted .zip archive: ${extractErr.message}` }, { status: 400 });
+    }
 
     // -------------------------------------------------------------
     // Step C: Double-Folder Fix

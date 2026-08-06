@@ -125,12 +125,24 @@ export default function Dashboard() {
         body: formData,
       });
 
-      clearInterval(stepTimer);
-
-      const data = await response.json();
+      let data;
+      const responseText = await response.text();
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseErr) {
+        if (!response.ok) {
+          if (response.status === 413) {
+            throw new Error('File upload failed: The server payload limit was exceeded (HTTP 413). Please try a smaller ZIP file.');
+          } else if (response.status === 504 || response.status === 502) {
+            throw new Error(`Deployment timed out on server (HTTP ${response.status}). The FTP transfer took too long or the connection dropped.`);
+          }
+          throw new Error(`Server returned error status HTTP ${response.status} (${response.statusText || 'Upload Error'}).`);
+        }
+        throw new Error('Server returned an unexpected non-JSON response.');
+      }
 
       if (!response.ok || !data.success) {
-        throw new Error(data.error || 'Deployment failed. Please check server logs.');
+        throw new Error(data.error || `Deployment failed (HTTP ${response.status}). Please verify your site files and try again.`);
       }
 
       setCurrentStep(steps.length - 1);
