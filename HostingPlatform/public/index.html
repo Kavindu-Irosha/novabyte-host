@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>NovaByte Host - Deploy Static Sites Instantly</title>
+  <meta name="description" content="Host your static web projects automatically with zero config. Input your custom subdomain, upload your site archive, and go live with native SSL.">
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+
+  <!-- Ambient background glow elements -->
+  <div class="glow-spotlight glow-top-left"></div>
+  <div class="glow-spotlight glow-bottom-right"></div>
+  <div class="glow-spotlight glow-middle-right"></div>
+
+  <!-- Background Grid Pattern Overlay -->
+  <div class="grid-overlay"></div>
+
+  <div class="app-wrapper">
+
+    <!-- Header Section -->
+    <header class="app-header">
+      <h1 class="main-title">
+        Deploy Static Sites <br class="desktop-only">
+        <span class="gradient-text">Instantly on Whitedev's Servers</span>
+      </h1>
+      <p class="subtitle">
+        Host your static web projects automatically with zero config. Input your custom subdomain, upload your site archive, and go live with native SSL.
+      </p>
+    </header>
+
+    <!-- Main Glass Card Container -->
+    <div class="glass-panel main-card">
+
+      <!-- Error Alert Box -->
+      <div id="error-alert" class="alert-box error-alert hidden">
+        <svg class="icon alert-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="10"></circle>
+          <line x1="12" y1="8" x2="12" y2="12"></line>
+          <line x1="12" y1="16" x2="12.01" y2="16"></line>
+        </svg>
+        <div class="alert-content">
+          <p class="alert-title">Deployment Error</p>
+          <p id="error-message" class="alert-text">An unexpected error occurred.</p>
+        </div>
+      </div>
+
+      <!-- STATE 1: IDLE / INPUT FORM -->
+      <form id="deploy-form" class="deploy-form">
+
+        <!-- Subdomain Input Group -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="subdomain-input" class="form-label">
+              <svg class="icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="2" y1="12" x2="22" y2="12"></line>
+                <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"></path>
+              </svg>
+              Target Subdomain Name
+            </label>
+            <span class="domain-tag font-mono">.novabyte-labs.com</span>
+          </div>
+
+          <div class="input-wrapper">
+            <input
+              id="subdomain-input"
+              type="text"
+              placeholder="e.g. my-portfolio, myproject"
+              required
+              maxlength="30"
+              class="glass-input font-mono"
+              autocomplete="off"
+            />
+            <div class="input-badge font-mono">.novabyte-labs.com</div>
+          </div>
+
+          <!-- Subdomain Live Preview Pill -->
+          <div class="preview-pill font-mono">
+            <svg class="icon text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+            </svg>
+            <span>Live Preview:</span>
+            <span id="preview-url" class="preview-url text-cyan">https://your-site.novabyte-labs.com</span>
+          </div>
+        </div>
+
+        <!-- ZIP File Upload Zone -->
+        <div class="form-group">
+          <div class="label-row">
+            <label class="form-label">
+              <svg class="icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                <polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline>
+                <line x1="12" y1="22.08" x2="12" y2="12"></line>
+              </svg>
+              Static Website Package (.ZIP)
+            </label>
+            <span class="domain-tag font-mono text-cyan">Max Size: 15 MB</span>
+          </div>
+
+          <div id="dropzone" class="dropzone">
+            <input type="file" id="file-input" accept=".zip,application/zip,application/x-zip-compressed" class="hidden-file-input">
+            
+            <!-- Default Dropzone Content -->
+            <div id="dropzone-idle" class="dropzone-idle">
+              <div class="dropzone-icon-circle">
+                <svg class="icon large-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"></path>
+                  <path d="M12 12v9"></path>
+                  <path d="m16 16-4-4-4 4"></path>
+                </svg>
+              </div>
+              <div class="dropzone-text">
+                <p class="dropzone-prompt">
+                  <span class="text-indigo underline-hover">Click to browse</span> or drag and drop your .zip file
+                </p>
+                <p class="dropzone-subtext font-mono">Supports index.html, CSS, JS, images <span class="text-cyan">(Max 15MB limit)</span></p>
+              </div>
+            </div>
+
+            <!-- Selected File Display -->
+            <div id="dropzone-selected" class="dropzone-selected hidden">
+              <div class="file-info">
+                <svg class="icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                </svg>
+                <div class="file-details">
+                  <p id="file-name" class="file-name"></p>
+                  <p id="file-size" class="file-size font-mono"></p>
+                </div>
+              </div>
+              <button type="button" id="remove-file-btn" class="remove-file-btn" title="Remove file">
+                <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <polyline points="3 6 5 6 21 6"></polyline>
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                </svg>
+              </button>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- Submit Button -->
+        <button type="submit" id="submit-btn" class="gradient-button submit-btn" disabled>
+          <span>Deploy Website Now</span>
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12"></line>
+            <polyline points="12 5 19 12 12 19"></polyline>
+          </svg>
+        </button>
+
+      </form>
+
+      <!-- STATE 2: DEPLOYING PROGRESS STEPPER -->
+      <div id="deploy-progress" class="deploy-progress hidden">
+        <div class="progress-header">
+          <div class="spinner-container">
+            <div class="spinner-ring"></div>
+            <svg class="icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="2" width="20" height="8" rx="2" ry="2"></rect>
+              <rect x="2" y="14" width="20" height="8" rx="2" ry="2"></rect>
+              <line x1="6" y1="6" x2="6.01" y2="6"></line>
+              <line x1="6" y1="18" x2="6.01" y2="18"></line>
+            </svg>
+          </div>
+          <h3 class="progress-title">Deploying Your Site...</h3>
+          <p class="progress-target font-mono">
+            https://<span id="target-subdomain-text" class="text-cyan"></span>.novabyte-labs.com
+          </p>
+        </div>
+
+        <!-- Stepper Container -->
+        <div id="stepper-list" class="stepper-list">
+          <!-- Step Items populated via JS -->
+        </div>
+
+        <!-- Progress Bar -->
+        <div class="progress-bar-container">
+          <div id="progress-bar-fill" class="progress-bar-fill" style="width: 20%;"></div>
+        </div>
+      </div>
+
+      <!-- STATE 3: SUCCESS SCREEN -->
+      <div id="deploy-success" class="deploy-success hidden">
+        
+        <!-- Multi-Ring Shockwave Success Badge -->
+        <div class="success-badge-wrapper">
+          <div class="ripple-ring"></div>
+          <div class="orbit-ring"></div>
+          
+          <div class="sparkle-particle particle-1">
+            <svg class="icon small-icon text-cyan" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m12 3-1.9 5.8a2 2 0 0 1-1.3 1.3L3 12l5.8 1.9a2 2 0 0 1 1.3 1.3L12 21l1.9-5.8a2 2 0 0 1 1.3-1.3L21 12l-5.8-1.9a2 2 0 0 1-1.3-1.3Z"/></svg>
+          </div>
+          <div class="sparkle-particle particle-2">
+            <svg class="icon small-icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.88 12.88 0 0 1 22 2c0 2.72-.78 7.5-3.05 11a22.35 22.35 0 0 1-3.95 2z"/></svg>
+          </div>
+          <div class="sparkle-particle particle-3">
+            <svg class="icon small-icon text-amber" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5.8 11.3 2 14l4 .2.7 4 2.5-3.3L12 17l1.5-6.2L5.8 11.3z"/><path d="M12 2v4"/><path d="M17.5 5.5 15 8"/></svg>
+          </div>
+
+          <div class="success-core-badge">
+            <svg class="icon large-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+              <polyline points="22 4 12 14.01 9 11.01"></polyline>
+            </svg>
+          </div>
+        </div>
+
+        <div class="success-heading-group">
+          <div class="ssl-badge">
+            <svg class="icon tiny-icon text-emerald" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/><polyline points="9 11 11 13 15 9"/></svg>
+            <span>Native cPanel SSL & HTTPS Active</span>
+          </div>
+          <h3 class="success-title">Your Website is Live!</h3>
+          <p class="success-desc">Subdomain created and static assets extracted natively on server.</p>
+        </div>
+
+        <!-- URL Display Card -->
+        <div class="url-card">
+          <div class="url-card-left">
+            <svg class="icon text-cyan flex-shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
+            <div class="url-text-group">
+              <span class="url-label font-mono">Live Subdomain URL</span>
+              <a id="live-url-link" href="#" target="_blank" rel="noopener noreferrer" class="live-url-text font-mono"></a>
+            </div>
+          </div>
+          <button type="button" id="copy-link-btn" class="copy-btn">
+            <svg id="copy-icon" class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+            <svg id="check-icon" class="icon text-emerald hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"/></svg>
+            <span id="copy-text">Copy Link</span>
+          </button>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="success-actions">
+          <a id="open-site-btn" href="#" target="_blank" rel="noopener noreferrer" class="gradient-button action-btn">
+            <span>Open Live Site</span>
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          </a>
+          <button type="button" id="deploy-another-btn" class="secondary-btn action-btn">
+            <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+            <span>Deploy Another</span>
+          </button>
+        </div>
+
+      </div>
+
+    </div>
+
+    <!-- Footer -->
+    <footer class="app-footer font-mono">
+      <div class="server-badge">
+        <svg class="icon text-indigo" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="2" width="20" height="8" rx="2" ry="2"/><rect x="2" y="14" width="20" height="8" rx="2" ry="2"/><line x1="6" y1="6" x2="6.01" y2="6"/><line x1="6" y1="18" x2="6.01" y2="18"/></svg>
+        <span>Server: node243.r-usdatacenter</span>
+      </div>
+      <span class="footer-dot">•</span>
+      <div class="footer-branding font-sans">
+        <span>Made by</span>
+        <strong class="text-white">Kavindu Irosha</strong>
+        <span>with</span>
+        <svg class="icon tiny-icon text-rose heart-pulse" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/></svg>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
